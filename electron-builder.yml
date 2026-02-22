@@ -1,0 +1,19 @@
+appId: com.voicealert.app
+productName: VoiceAlert
+directories:
+  buildResources: build
+
+win:
+  target: nsis
+  icon: resources/icon.png
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: VoiceAlert
+  uninstallDisplayName: VoiceAlert
+  runAfterFinish: true
