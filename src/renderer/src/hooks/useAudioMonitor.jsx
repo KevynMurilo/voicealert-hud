@@ -30,42 +30,45 @@ export function useAudioMonitor(threshold, cooldown, alertType, soundType, devic
   const playSound = () => {
     const ctx = audioCtxRef.current || new (window.AudioContext || window.webkitAudioContext)()
     if (!audioCtxRef.current) audioCtxRef.current = ctx
-    
     if (ctx.state === 'suspended') ctx.resume()
     
     const now = ctx.currentTime
     const currentSound = configRefs.current.soundType
     
-    const playTone = (freq, type, time, dur, vol) => {
+    const createLayer = (freq, type, start, dur, vol, detune = 0) => {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.type = type
-      osc.frequency.setValueAtTime(freq, time)
-      gain.gain.setValueAtTime(vol, time)
-      gain.gain.exponentialRampToValueAtTime(0.001, time + dur)
+      osc.frequency.setValueAtTime(freq, start)
+      osc.detune.setValueAtTime(detune, start)
+      gain.gain.setValueAtTime(vol, start)
+      gain.gain.exponentialRampToValueAtTime(0.001, start + dur)
       osc.connect(gain)
       gain.connect(ctx.destination)
-      osc.start(time)
-      osc.stop(time + dur)
+      osc.start(start)
+      osc.stop(start + dur)
     }
 
     if (currentSound === 'soft-pop') {
-      playTone(500, 'sine', now, 0.1, 0.3)
-      playTone(750, 'sine', now + 0.08, 0.2, 0.3)
+      createLayer(523.25, 'sine', now, 0.2, 0.4) // C5
+      createLayer(783.99, 'sine', now + 0.05, 0.2, 0.3) // G5
     } else if (currentSound === 'cyber-chirp') {
-      playTone(1400, 'square', now, 0.08, 0.08)
-      playTone(1800, 'square', now + 0.1, 0.08, 0.08)
+      createLayer(1200, 'square', now, 0.1, 0.1)
+      createLayer(2400, 'square', now + 0.05, 0.1, 0.05)
+      createLayer(1800, 'square', now + 0.1, 0.1, 0.08)
     } else if (currentSound === 'sonar') {
-      playTone(800, 'sine', now, 1.2, 0.4)
-      playTone(804, 'sine', now, 1.2, 0.4)
+      // Efeito de batimento (Beating) - Impossível de ignorar
+      createLayer(440, 'sine', now, 0.8, 0.3)
+      createLayer(444, 'sine', now, 0.8, 0.3) 
     } else if (currentSound === 'glass') {
-      playTone(2500, 'triangle', now, 0.05, 0.15)
-      playTone(3000, 'sine', now, 0.2, 0.1)
+      createLayer(2000, 'sine', now, 0.3, 0.3)
+      createLayer(3500, 'triangle', now, 0.05, 0.2)
     } else if (currentSound === 'overload') {
-      playTone(400, 'sawtooth', now, 0.15, 0.15)
-      playTone(500, 'sawtooth', now + 0.15, 0.15, 0.15)
-      playTone(400, 'sawtooth', now + 0.30, 0.15, 0.15)
-      playTone(500, 'sawtooth', now + 0.45, 0.15, 0.15)
+      // Alerta industrial agressivo
+      [0, 0.2, 0.4].forEach(offset => {
+        createLayer(220, 'sawtooth', now + offset, 0.15, 0.2)
+        createLayer(440, 'sawtooth', now + offset, 0.15, 0.2)
+      })
     }
   }
 
